@@ -1,69 +1,97 @@
-# AI-Assisted Software Engineering — URL Shortener Prototype
+# AI-Assisted Software Engineering — URL Shortener Service
 
-This repository demonstrates how AI tools can accelerate software development while maintaining strict engineering control, robust architecture, and code quality.
+[![CI Quality Gate](https://github.com/abhishek-sb-devops/ai-proficient-se/actions/workflows/ci.yml/badge.svg)](https://github.com/abhishek-sb-devops/ai-proficient-se/actions)
+![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
+![Code Style](https://img.shields.io/badge/code%20style-flake8-green)
+![Tests](https://img.shields.io/badge/tests-pytest-brightgreen)
+
+A production-ready, high-performance URL shortener microservice built with **Python 3.13**, **FastAPI**, **SQLite**, and **Docker**. This project demonstrates how AI-assisted workflows can accelerate software delivery while maintaining strict domain boundaries, thread safety, and test coverage.
+
+---
 
 ## 📁 Project Directory Structure
 
 ```text
-ai-proficient-se-assignment/
-│
+ai-proficient-se/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                  # GitHub Actions CI pipeline (Linting & Pytest)
-│
-├── app/                            # Domain-Driven Application Tier
+│       └── ci.yml             # GitHub Actions CI pipeline (Linting & Pytest)
+├── src/                       # Application Source Code
 │   ├── __init__.py
-│   ├── config.py                   # Environment & Pydantic settings
-│   ├── exceptions.py               # Custom domain exception hierarchy
-│   ├── models.py                   # Pydantic schemas & DTOs
-│   ├── encoder.py                  # Base62 encoding utility
-│   ├── repository.py               # Repository abstraction & Thread-safe store
-│   ├── service.py                  # Core domain service layer
-│   ├── middleware.py               # Request correlation ID middleware
-│   └── main.py                     # FastAPI application entrypoint & health endpoints
-│
-├── tests/                          # Automated Pytest Suite
+│   ├── config.py              # Environment & Pydantic settings
+│   ├── encoder.py             # Base62 encoding utility
+│   ├── exceptions.py          # Custom domain exception hierarchy
+│   ├── main.py                # FastAPI entrypoint & health routes
+│   ├── middleware.py          # Request correlation ID middleware
+│   ├── models.py              # Pydantic schemas aligned with OpenAPI spec
+│   ├── repository.py          # Thread-safe SQLite persistence layer
+│   └── service.py             # Core domain service & thread-locked alias management
+├── tests/                     # Automated Test Suite
 │   ├── __init__.py
-│   ├── test_encoder.py             # Base62 encoder unit tests
-│   └── test_service.py             # Domain service & concurrency integration tests
-│
-├── docs/                           # API Contracts & Artifacts
-│   ├── openapi.yaml                # OpenAPI 3.0 specification contract
-│   └── postman_collection.json     # Ready-to-import Postman test suite
-│
-├── Dockerfile                      # Production container image build
-├── docker-compose.yml              # Single-command local container orchestration
-├── README.md                       # Architectural overview & guide
-├── requirements.txt                # Production Python dependencies
-├── pyproject.toml                  # Flake8 & Pytest configuration
-└── .gitignore                      # Git exclusion rules
+│   ├── test_api.py            # Integration tests (HTTP endpoints, contract, concurrency)
+│   └── test_service.py        # Unit tests (encoder, repository, domain logic)
+├── AI_DOCUMENTATION.md        # AI workflow, prompts, and engineering trade-offs
+├── Dockerfile                 # Production container build
+├── openapi.yaml               # OpenAPI 3.0 API Specification
+├── pyproject.toml             # Flake8 & Pytest configuration
+├── requirements.txt           # Production Python dependencies
+└── README.md                  # Project documentation
 
-# AI-Assisted Software Engineering — URL Shortener Service
+🚀 Key Features & Architecture
+Persistent Storage: SQLite database backend with Write-Ahead Logging (WAL) and busy timeouts, ensuring data durability across container restarts.
 
-![CI Quality Gate](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions/workflows/ci.yml/badge.svg)
-![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)
-![Code Style](https://img.shields.io/badge/code%20style-flake8-green)
-![Tests](https://img.shields.io/badge/tests-pytest-brightgreen)
+Concurrency & Thread Safety: Thread-safe custom alias assignment guaranteed via threading.Lock() at the service layer and PRIMARY KEY constraints at the database layer.
 
-## Architecture & Design
-- **Base62 Encoding:** Uses Base62 character encoding on an auto-incrementing ID for deterministic short keys.
-- **Thread Safety:** Thread-safe counter increments and analytics tracking via mutex locks.
-- **Validation:** Enforces URI schemes (`http`/`https`) and sanitizes custom alias strings via regex (`^[a-zA-Z0-9_-]{3,30}$`).
-- **OpenAPI 3.0 Contract:** Complete API specification located in `docs/openapi.yaml`.
+OpenAPI 3.0 Alignment: Fully aligned request payload schemas (original_url), response payloads (short_code, original_url, created_at), and status codes (400 Bad Request for conflicts).
 
-## Project Structure
-- `src/encoder.py`: Base62 encoding utility.
-- `src/service.py`: URL Shortener domain service.
-- `main.py`: Runnable entrypoint demonstrating real use cases.
-- `tests/test_service.py`: Comprehensive Pytest test suite.
-- `.github/workflows/ci.yml`: Automated CI quality gate.
+Observability: Structured JSON logging, /healthz and /readyz probes, and X-Correlation-ID header request tracing.
 
-## Getting Started
+AI Execution Artifacts: Detailed documentation in AI_DOCUMENTATION.md outlining greenfield/brownfield prompts, iteration logs, and engineering trade-offs.
 
-### Prerequisites
-- Python 3.9+
+🛠️ Getting Started
+Prerequisites
+Python 3.11+
+Docker (optional)
 
-### Installation & Run
-```bash
-pip install -r requirements.txt
-python main.py
+Local Setup & Installation
+
+Clone the repository:
+
+git clone [https://github.com/abhishek-sb-devops/ai-proficient-se.git](https://github.com/abhishek-sb-devops/ai-proficient-se.git)
+cd ai-proficient-se
+
+Create and activate a virtual environment:
+
+python -m venv venv
+# On macOS/Linux:
+source venv/bin/activate
+
+# On Windows:
+venv\Scripts\activate
+
+Install dependencies:
+install -r requirements.txt
+
+Run the local development server:
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+The service will be available at http://localhost:8000. Access interactive API documentation at http://localhost:8000/docs.
+
+🧪 Testing & Linting
+
+Run the Test SuiteThe repository includes unit tests (tests/test_service.py) and HTTP 
+
+integration/concurrency tests (tests/test_api.py):
+python -m pytest -v tests/
+
+Run Code LinterEnforce code formatting and line-length standards:
+python -m flake8 src/ tests/ --max-line-length=100
+
+🐳 Docker Deployment
+Build the ImageBashdocker build -t url-shortener .
+
+Run the Container:
+docker run -d -p 8000:8000 --name url-shortener-app url-shortener
+
+Verify Service HealthBashcurl http://localhost:8000/healthz
+
+📋 API Endpoints SummaryMethodEndpointDescriptionStatus CodeGET/healthzLiveness health probe200 OKGET/readyzReadiness health probe200 OKPOST/api/v1/shortenShorten a URL or set a custom alias201 Created / 400 Bad RequestGET/{short_code}Redirect to original target URL302 Found / 404 Not FoundGET/api/v1/analytics/{short_code}Retrieve analytics (click count)200 OK / 404 Not Found
