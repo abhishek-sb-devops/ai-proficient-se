@@ -1,7 +1,7 @@
 import logging
 import sys
 from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse
 
 from src.config import settings
 from src.models import ShortenRequest, AnalyticsResponse
@@ -31,39 +31,31 @@ root_logger.addHandler(file_handler)
 
 logger = logging.getLogger("app")
 
-# Initialize Dependencies
 repo = InMemoryRepository()
 service = URLShortenerService(repository=repo, seed_counter=settings.base_counter_seed)
 
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
-    description="Production-grade URL Shortener microservice with correlation middleware and health probes.",
+    description=(
+        "Production-grade URL Shortener microservice with "
+        "correlation middleware and health probes."
+    ),
 )
 
-# Register Custom Middleware
 app.add_middleware(RequestCorrelationMiddleware)
 
 
-# -----------------------------------------------------------------------------
-# Liveness & Readiness Health Probes
-# -----------------------------------------------------------------------------
 @app.get("/healthz", status_code=status.HTTP_200_OK, tags=["Health"])
 def liveness_probe():
-    """Liveness probe for container orchestrators (Kubernetes/Docker)."""
     return {"status": "healthy", "service": settings.app_name}
 
 
 @app.get("/readyz", status_code=status.HTTP_200_OK, tags=["Health"])
 def readiness_probe():
-    """Readiness probe checking storage dependency health."""
-    # Add database/cache ping logic here when migrating to SQL/Redis
     return {"status": "ready", "storage": "in_memory_ok"}
 
 
-# -----------------------------------------------------------------------------
-# Domain Endpoints
-# -----------------------------------------------------------------------------
 @app.post("/api/v1/shorten", status_code=status.HTTP_201_CREATED, tags=["URL Operations"])
 def shorten_url(payload: ShortenRequest):
     try:
@@ -82,7 +74,12 @@ def shorten_url(payload: ShortenRequest):
         )
 
 
-@app.get("/{short_code}", response_class=RedirectResponse, status_code=status.HTTP_302_FOUND, tags=["URL Operations"])
+@app.get(
+    "/{short_code}",
+    response_class=RedirectResponse,
+    status_code=status.HTTP_302_FOUND,
+    tags=["URL Operations"],
+)
 def redirect_to_url(short_code: str):
     try:
         target_url = service.resolve_url(short_code)

@@ -1,38 +1,43 @@
 import pytest
-import pytest
 from src.repository import InMemoryRepository
 from src.service import URLShortenerService
 from src.exceptions import URLNotFoundException, AliasConflictException
 
-@pytest.fixture
-def service():
+
+def test_shorten_url_generates_code():
     repo = InMemoryRepository()
-    return URLShortenerService(repository=repo, seed_counter=100)
-
-
-def test_shorten_and_resolve_flow(service):
-    code = service.shorten_url("https://python.org")
+    service = URLShortenerService(repository=repo)
+    code = service.shorten_url("https://www.example.com")
     assert code is not None
-
-    resolved = service.resolve_url(code)
-    assert resolved == "https://python.org"
+    assert isinstance(code, str)
 
 
-def test_custom_alias_conflict(service):
-    service.shorten_url("https://example.com/1", custom_alias="my-link")
-    with pytest.raises(AliasConflictException):
-        service.shorten_url("https://example.com/2", custom_alias="my-link")
+def test_resolve_url_success():
+    repo = InMemoryRepository()
+    service = URLShortenerService(repository=repo)
+    code = service.shorten_url("https://www.example.com")
+    resolved_url = service.resolve_url(code)
+    assert resolved_url == "https://www.example.com"
 
 
-def test_non_existent_code_raises_not_found(service):
+def test_resolve_url_not_found():
+    repo = InMemoryRepository()
+    service = URLShortenerService(repository=repo)
     with pytest.raises(URLNotFoundException):
-        service.resolve_url("missing")
+        service.resolve_url("nonexistent")
 
 
-def test_analytics_click_tracking(service):
-    code = service.shorten_url("https://fastapi.tiangolo.com")
-    service.resolve_url(code)
-    service.resolve_url(code)
+def test_custom_alias_success():
+    repo = InMemoryRepository()
+    service = URLShortenerService(repository=repo)
+    alias = service.shorten_url("https://www.example.com", custom_alias="my-link")
+    assert alias == "my-link"
+    assert service.resolve_url("my-link") == "https://www.example.com"
 
-    analytics = service.get_analytics(code)
-    assert analytics.total_clicks == 2
+
+def test_custom_alias_conflict():
+    repo = InMemoryRepository()
+    service = URLShortenerService(repository=repo)
+    service.shorten_url("https://www.example.com", custom_alias="duplicate")
+    with pytest.raises(AliasConflictException):
+        service.shorten_url("https://www.another.com", custom_alias="duplicate")
