@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Scalable URL Shortener API
+  version: 1.0.0
+  description: High-performance URL shortener with analytics tracking.
+paths:
+  /api/v1/shorten:
+    post:
+      summary: Create a shortened URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [original_url]
+              properties:
+                original_url:
+                  type: string
+                  format: uri
+                  example: https://www.example.com/very/long/url
+                custom_alias:
+                  type: string
+                  maxLength: 30
+                  example: my-custom-link
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  short_code:
+                    type: string
+                  original_url:
+                    type: string
+                  created_at:
+                    type: number
+        '400':
+          description: Invalid URL scheme or custom alias conflict
+  /{short_code}:
+    get:
+      summary: Redirect to original URL
+      parameters:
+        - name: short_code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirecting to original URL
+        '404':
+          description: Short code not found
+  /api/v1/analytics/{short_code}:
+    get:
+      summary: Fetch click analytics
+      parameters:
+        - name: short_code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analytics data returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  short_code:
+                    type: string
+                  original_url:
+                    type: string
+                  total_clicks:
+                    type: integer
+                  created_at:
+                    type: number
+        '404':
+          description: Short code not found

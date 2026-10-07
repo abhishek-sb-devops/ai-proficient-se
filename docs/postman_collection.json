@@ -1,0 +1,67 @@
+{
+  "info": {
+    "name": "Scalable URL Shortener API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Shorten URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"url\": \"https://github.com/fastapi/fastapi\",\n  \"custom_alias\": \"my-fastapi-link\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/v1/shorten",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "shorten"]
+        }
+      }
+    },
+    {
+      "name": "Resolve Short URL",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8000/my-fastapi-link",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["my-fastapi-link"]
+        }
+      }
+    },
+    {
+      "name": "Get Click Analytics",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8000/api/v1/analytics/my-fastapi-link",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["api", "v1", "analytics", "my-fastapi-link"]
+        }
+      }
+    },
+    {
+      "name": "Liveness Probe",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8000/healthz",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["healthz"]
+        }
+      }
+    }
+  ]
+}
