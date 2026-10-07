@@ -20,7 +20,7 @@ jobs:
           
       - name: Lint with Flake8
         run: |
-          flake8 src/ tests/ --max-line-length=100
+          flake8 src/ tests/ main.py --max-line-length=100
           
       - name: Run Pytest Suite
         run: |

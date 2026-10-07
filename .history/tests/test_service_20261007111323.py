@@ -1,8 +1,8 @@
 import pytest
-import pytest
-from src.repository import InMemoryRepository
-from src.service import URLShortenerService
-from src.exceptions import URLNotFoundException, AliasConflictException
+from app.repository import InMemoryRepository
+from app.service import URLShortenerService
+from app.exceptions import URLNotFoundException, AliasConflictException
+
 
 @pytest.fixture
 def service():
