@@ -1,42 +1,64 @@
+import os
 import pytest
-from src.repository import InMemoryRepository
+from src.repository import SQLiteRepository
 from src.service import URLShortenerService
 from src.exceptions import URLNotFoundException, AliasConflictException
 
+TEST_DB = "test_service_urls.db"
+
+
+@pytest.fixture(autouse=True)
+def setup_and_cleanup_db():
+    # Remove old test DB before test runs
+    if os.path.exists(TEST_DB):
+        try:
+            os.remove(TEST_DB)
+        except PermissionError:
+            pass
+
+    yield
+
+    # Clean up after test finishes
+    if os.path.exists(TEST_DB):
+        try:
+            os.remove(TEST_DB)
+        except PermissionError:
+            pass
+
 
 def test_shorten_url_generates_code():
-    repo = InMemoryRepository()
+    repo = SQLiteRepository(db_path=TEST_DB)
     service = URLShortenerService(repository=repo)
-    code = service.shorten_url("https://www.example.com")
-    assert code is not None
-    assert isinstance(code, str)
+    record = service.shorten_url("https://www.example.com")
+    assert "short_code" in record
+    assert record["original_url"] == "https://www.example.com"
 
 
 def test_resolve_url_success():
-    repo = InMemoryRepository()
+    repo = SQLiteRepository(db_path=TEST_DB)
     service = URLShortenerService(repository=repo)
-    code = service.shorten_url("https://www.example.com")
-    resolved_url = service.resolve_url(code)
+    record = service.shorten_url("https://www.example.com")
+    resolved_url = service.resolve_url(record["short_code"])
     assert resolved_url == "https://www.example.com"
 
 
 def test_resolve_url_not_found():
-    repo = InMemoryRepository()
+    repo = SQLiteRepository(db_path=TEST_DB)
     service = URLShortenerService(repository=repo)
     with pytest.raises(URLNotFoundException):
         service.resolve_url("nonexistent")
 
 
 def test_custom_alias_success():
-    repo = InMemoryRepository()
+    repo = SQLiteRepository(db_path=TEST_DB)
     service = URLShortenerService(repository=repo)
-    alias = service.shorten_url("https://www.example.com", custom_alias="my-link")
-    assert alias == "my-link"
+    record = service.shorten_url("https://www.example.com", custom_alias="my-link")
+    assert record["short_code"] == "my-link"
     assert service.resolve_url("my-link") == "https://www.example.com"
 
 
 def test_custom_alias_conflict():
-    repo = InMemoryRepository()
+    repo = SQLiteRepository(db_path=TEST_DB)
     service = URLShortenerService(repository=repo)
     service.shorten_url("https://www.example.com", custom_alias="duplicate")
     with pytest.raises(AliasConflictException):

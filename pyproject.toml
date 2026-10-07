@@ -2,3 +2,9 @@
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = "."
+filterwarnings = [
+    "ignore:.*httpx.*:UserWarning",
+    "ignore:.*httpx.*:DeprecationWarning",
+    "ignore:.*httpx.*",
+    "ignore::DeprecationWarning"
+]

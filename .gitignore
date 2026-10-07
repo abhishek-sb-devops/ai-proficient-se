@@ -17,3 +17,10 @@ history/
 # Log files
 *.log
 logs/
+
+# SQLite Databases
+*.db
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm

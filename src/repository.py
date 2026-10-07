@@ -1,54 +1,80 @@
-from abc import ABC, abstractmethod
-import threading
-from typing import Optional, Dict
-from src.models import URLRecord
+import sqlite3
+from datetime import datetime, timezone
+from typing import Optional
+from src.exceptions import URLNotFoundException
 
 
-class BaseRepository(ABC):
-    """Abstract Base Repository enforcing persistence interface contract."""
+class SQLiteRepository:
+    def __init__(self, db_path: str = "urls.db"):
+        self.db_path = db_path
+        self._init_db()
 
-    @abstractmethod
-    def save(self, record: URLRecord) -> None:
-        pass
+    def _get_connection(self):
+        conn = sqlite3.connect(self.db_path, timeout=20.0, check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        return conn
 
-    @abstractmethod
-    def find_by_code(self, short_code: str) -> Optional[URLRecord]:
-        pass
+    def _init_db(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS urls (
+                    short_code TEXT PRIMARY KEY,
+                    original_url TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    clicks INTEGER DEFAULT 0
+                )
+                """
+            )
+            conn.commit()
 
-    @abstractmethod
-    def increment_clicks(self, short_code: str) -> int:
-        pass
+    def save(self, short_code: str, original_url: str) -> dict:
+        created_at = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO urls (short_code, original_url, created_at, clicks)
+                VALUES (?, ?, ?, 0)
+                """,
+                (short_code, original_url, created_at),
+            )
+            conn.commit()
+        return {
+            "short_code": short_code,
+            "original_url": original_url,
+            "created_at": created_at,
+            "clicks": 0,
+        }
 
-    @abstractmethod
-    def get_clicks(self, short_code: str) -> int:
-        pass
+    def get_by_code(self, short_code: str) -> Optional[dict]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT short_code, original_url, created_at, clicks "
+                "FROM urls WHERE short_code = ?",
+                (short_code,),
+            )
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "short_code": row[0],
+                    "original_url": row[1],
+                    "created_at": row[2],
+                    "clicks": row[3],
+                }
+        return None
 
-
-class InMemoryRepository(BaseRepository):
-    """Thread-safe in-memory repository implementation using RLock."""
-
-    def __init__(self):
-        self._records: Dict[str, URLRecord] = {}
-        self._clicks: Dict[str, int] = {}
-        self._lock = threading.RLock()
-
-    def save(self, record: URLRecord) -> None:
-        with self._lock:
-            self._records[record.short_code] = record
-            if record.short_code not in self._clicks:
-                self._clicks[record.short_code] = 0
-
-    def find_by_code(self, short_code: str) -> Optional[URLRecord]:
-        with self._lock:
-            return self._records.get(short_code)
-
-    def increment_clicks(self, short_code: str) -> int:
-        with self._lock:
-            if short_code in self._clicks:
-                self._clicks[short_code] += 1
-                return self._clicks[short_code]
-            return 0
-
-    def get_clicks(self, short_code: str) -> int:
-        with self._lock:
-            return self._clicks.get(short_code, 0)
+    def increment_clicks(self, short_code: str) -> str:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE urls SET clicks = clicks + 1 WHERE short_code = ?",
+                (short_code,),
+            )
+            if cursor.rowcount == 0:
+                raise URLNotFoundException(f"URL code '{short_code}' not found.")
+            conn.commit()
+            cursor.execute("SELECT original_url FROM urls WHERE short_code = ?", (short_code,))
+            return cursor.fetchone()[0]
