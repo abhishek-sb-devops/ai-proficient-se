@@ -11,7 +11,8 @@ ENV/
 dist/
 build/
 generated_artifacts/
-
+.history/
+history/
 
 # Log files
 *.log
