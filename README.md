@@ -86,12 +86,26 @@ python -m pytest -v tests/
 Run Code LinterEnforce code formatting and line-length standards:
 python -m flake8 src/ tests/ --max-line-length=100
 
-🐳 Docker Deployment
-Build the ImageBashdocker build -t url-shortener .
+## 🐳 Docker Deployment & Troubleshooting
 
-Run the Container:
+### 1. Build and Run Container
+
+```powershell
+# Build the Docker image
+docker build -t url-shortener .
+
+# Run the container in detached mode on port 8000
 docker run -d -p 8000:8000 --name url-shortener-app url-shortener
 
-Verify Service HealthBashcurl http://localhost:8000/healthz
+# Verify service liveness
+Invoke-RestMethod -Uri "http://localhost:8000/healthz"
 
-📋 API Endpoints SummaryMethodEndpointDescriptionStatus CodeGET/healthzLiveness health probe200 OKGET/readyzReadiness health probe200 OKPOST/api/v1/shortenShorten a URL or set a custom alias201 Created / 400 Bad RequestGET/{short_code}Redirect to original target URL302 Found / 404 Not FoundGET/api/v1/analytics/{short_code}Retrieve analytics (click count)200 OK / 404 Not Found
+## 📋 API Endpoints Summary
+
+| Method | Endpoint | Description | Status Code |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/healthz`                       | Liveness probe                             | `200 OK` |
+| `GET` | `/readyz`                        | Readiness probe (verifies DB connection)   | `200 OK` / `503 Service Unavailable` |
+| `POST`| `/api/v1/shorten`                | Shorten a URL or claim a custom alias      | `201 Created` / `400 Bad Request` |
+| `GET` | `/{short_code}`                  | Redirect to original URL                   | `302 Found` / `404 Not Found` |
+| `GET` | `/api/v1/analytics/{short_code}` | Retrieve redirect click count              | `200 OK` / `404 Not Found` |
