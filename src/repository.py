@@ -72,7 +72,8 @@ class SQLiteRepository:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT short_code, original_url, created_at, clicks FROM urls WHERE short_code = ?",
+                "SELECT short_code, original_url, created_at, clicks "
+                "FROM urls WHERE short_code = ?",
                 (short_code,),
             )
             row = cursor.fetchone()
