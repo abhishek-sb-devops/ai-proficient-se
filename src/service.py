@@ -7,32 +7,31 @@ logger = logging.getLogger("app.service")
 
 
 class URLShortenerService:
-    def __init__(self, repository, seed_counter: int = 1000):
+    def __init__(self, repository):
         self.repository = repository
-        self.counter = seed_counter
         self.lock = threading.Lock()
 
     def shorten_url(self, original_url: str, custom_alias: str = None) -> dict:
         with self.lock:
             if custom_alias:
-                logger.info("Attempting to create URL with custom alias: '%s'", custom_alias)
+                logger.info("Attempting custom alias creation: '%s'", custom_alias)
                 if self.repository.get_by_code(custom_alias):
-                    logger.warning("Custom alias conflict encountered: '%s'", custom_alias)
+                    logger.warning("Custom alias conflict: '%s'", custom_alias)
                     raise AliasConflictException(f"Alias '{custom_alias}' already exists.")
                 short_code = custom_alias
             else:
-                self.counter += 1
-                short_code = Base62Encoder.encode(self.counter)
+                next_id = self.repository.get_next_sequence_id()
+                short_code = Base62Encoder.encode(next_id)
                 while self.repository.get_by_code(short_code):
-                    self.counter += 1
-                    short_code = Base62Encoder.encode(self.counter)
+                    next_id = self.repository.get_next_sequence_id()
+                    short_code = Base62Encoder.encode(next_id)
 
             record = self.repository.save(short_code, original_url)
             logger.info("Successfully shortened URL: '%s' -> '%s'", original_url, short_code)
             return record
 
     def resolve_url(self, short_code: str) -> str:
-        logger.info("Resolving redirect target for short code: '%s'", short_code)
+        logger.info("Resolving short code: '%s'", short_code)
         try:
             target_url = self.repository.increment_clicks(short_code)
             logger.info("Resolved short code '%s' to '%s'", short_code, target_url)
@@ -42,9 +41,9 @@ class URLShortenerService:
             raise e
 
     def get_analytics(self, short_code: str) -> dict:
-        logger.info("Fetching analytics metrics for short code: '%s'", short_code)
+        logger.info("Fetching analytics for short code: '%s'", short_code)
         record = self.repository.get_by_code(short_code)
         if not record:
-            logger.warning("Analytics lookup failed for short code: '%s' (Not Found)", short_code)
+            logger.warning("Analytics failed for short code: '%s' (Not Found)", short_code)
             raise URLNotFoundException(f"URL code '{short_code}' not found.")
         return record

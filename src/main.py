@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger("app")
 
 repo = SQLiteRepository()
-service = URLShortenerService(repository=repo, seed_counter=settings.base_counter_seed)
+service = URLShortenerService(repository=repo)
 
 app = FastAPI(
     title=settings.app_name,
@@ -32,7 +32,15 @@ def liveness_probe():
 
 @app.get("/readyz", status_code=status.HTTP_200_OK, tags=["Health"])
 def readiness_probe():
-    return {"status": "ready", "storage": "sqlite_ok"}
+    try:
+        repo.check_health()
+        return {"status": "ready", "storage": "sqlite_connected"}
+    except Exception as e:
+        logger.error("Readiness check failed: %s", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Storage connection failed",
+        )
 
 
 @app.post(
@@ -67,9 +75,19 @@ def redirect_to_url(short_code: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
 
 
-@app.get("/api/v1/analytics/{short_code}", response_model=AnalyticsResponse, tags=["Analytics"])
+@app.get(
+    "/api/v1/analytics/{short_code}",
+    response_model=AnalyticsResponse,
+    tags=["Analytics"],
+)
 def get_analytics(short_code: str):
     try:
-        return service.get_analytics(short_code)
+        record = service.get_analytics(short_code)
+        return {
+            "short_code": record["short_code"],
+            "original_url": record["original_url"],
+            "created_at": record["created_at"],
+            "total_clicks": record["clicks"],
+        }
     except URLNotFoundException as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)

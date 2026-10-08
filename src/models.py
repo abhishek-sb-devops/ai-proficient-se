@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, HttpUrl, Field
 
@@ -11,11 +10,11 @@ class ShortenRequest(BaseModel):
 class ShortenResponse(BaseModel):
     short_code: str
     original_url: str
-    created_at: datetime
+    created_at: str
 
 
 class AnalyticsResponse(BaseModel):
     short_code: str
     original_url: str
-    created_at: datetime
-    clicks: int
+    created_at: str
+    total_clicks: int = Field(..., description="Total redirect clicks recorded")

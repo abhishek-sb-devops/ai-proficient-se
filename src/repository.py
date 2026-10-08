@@ -27,7 +27,27 @@ class SQLiteRepository:
                 )
                 """
             )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS sequence (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT
+                )
+                """
+            )
             conn.commit()
+
+    def check_health(self) -> bool:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1;")
+            return cursor.fetchone() is not None
+
+    def get_next_sequence_id(self) -> int:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO sequence DEFAULT VALUES;")
+            conn.commit()
+            return cursor.lastrowid
 
     def save(self, short_code: str, original_url: str) -> dict:
         created_at = datetime.now(timezone.utc).isoformat()
@@ -52,8 +72,7 @@ class SQLiteRepository:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT short_code, original_url, created_at, clicks "
-                "FROM urls WHERE short_code = ?",
+                "SELECT short_code, original_url, created_at, clicks FROM urls WHERE short_code = ?",
                 (short_code,),
             )
             row = cursor.fetchone()
@@ -76,5 +95,8 @@ class SQLiteRepository:
             if cursor.rowcount == 0:
                 raise URLNotFoundException(f"URL code '{short_code}' not found.")
             conn.commit()
-            cursor.execute("SELECT original_url FROM urls WHERE short_code = ?", (short_code,))
+            cursor.execute(
+                "SELECT original_url FROM urls WHERE short_code = ?",
+                (short_code,),
+            )
             return cursor.fetchone()[0]

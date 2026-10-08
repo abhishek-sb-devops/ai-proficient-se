@@ -9,7 +9,6 @@ TEST_DB = "test_service_urls.db"
 
 @pytest.fixture(autouse=True)
 def setup_and_cleanup_db():
-    # Remove old test DB before test runs
     if os.path.exists(TEST_DB):
         try:
             os.remove(TEST_DB)
@@ -18,7 +17,6 @@ def setup_and_cleanup_db():
 
     yield
 
-    # Clean up after test finishes
     if os.path.exists(TEST_DB):
         try:
             os.remove(TEST_DB)

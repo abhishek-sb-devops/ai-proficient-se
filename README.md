@@ -5,17 +5,17 @@
 ![Code Style](https://img.shields.io/badge/code%20style-flake8-green)
 ![Tests](https://img.shields.io/badge/tests-pytest-brightgreen)
 
-A production-ready, high-performance URL shortener microservice built with **Python 3.13**, **FastAPI**, **SQLite**, and **Docker**. This project demonstrates how AI-assisted workflows can accelerate software delivery while maintaining strict domain boundaries, thread safety, and test coverage.
+A production-ready URL shortener microservice built with **Python 3.13**, **FastAPI**, **SQLite**, and **Docker**.
 
 ---
 
-## 📁 Project Directory Structure
+## 📁 Directory Structure
 
 ```text
 ai-proficient-se/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml             # GitHub Actions CI pipeline (Linting & Pytest)
+│       └── ci.yml             # GitHub Actions CI pipeline
 ├── src/                       # Application Source Code
 │   ├── __init__.py
 │   ├── config.py              # Environment & Pydantic settings
@@ -25,17 +25,17 @@ ai-proficient-se/
 │   ├── middleware.py          # Request correlation ID middleware
 │   ├── models.py              # Pydantic schemas aligned with OpenAPI spec
 │   ├── repository.py          # Thread-safe SQLite persistence layer
-│   └── service.py             # Core domain service & thread-locked alias management
+│   └── service.py             # Domain service & thread-locked alias management
 ├── tests/                     # Automated Test Suite
 │   ├── __init__.py
-│   ├── test_api.py            # Integration tests (HTTP endpoints, contract, concurrency)
+│   ├── test_api.py            # Integration tests (HTTP, contract, analytics, concurrency)
 │   └── test_service.py        # Unit tests (encoder, repository, domain logic)
 ├── AI_DOCUMENTATION.md        # AI workflow, prompts, and engineering trade-offs
 ├── Dockerfile                 # Production container build
 ├── openapi.yaml               # OpenAPI 3.0 API Specification
 ├── pyproject.toml             # Flake8 & Pytest configuration
-├── requirements.txt           # Production Python dependencies
-└── README.md                  # Project documentation
+├── requirements.txt           # Explicit Python dependencies
+└── README.md                  # Architectural overview & setup guide
 
 🚀 Key Features & Architecture
 Persistent Storage: SQLite database backend with Write-Ahead Logging (WAL) and busy timeouts, ensuring data durability across container restarts.
